@@ -1,26 +1,15 @@
-const swaggerJsdoc = require("swagger-jsdoc");
-const swaggerUi = require("swagger-ui-express");
+const swaggerAutogen = require('swagger-autogen')();
 
-const options = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Neon Meme Marketplace API",
-      version: "1.0.0",
-      description: "API documentation for the Neon Meme MERN app",
-    },
-    servers: [
-      {
-        url: "http://localhost:5001", // change this if using a different port
-      },
-    ],
+const doc = {
+  info: {
+    title: 'Neon Meme Marketplace API',
+    description: 'API documentation for the Neon Meme MERN app',
   },
-  apis: ["./routes/*.js"], // path to your route files for Swagger comments
+  host: 'localhost:5001',
+  schemes: ['http'],
 };
 
-const specs = swaggerJsdoc(options);
+const outputFile = './swagger-output.json'; // generated file
+const endpointsFiles = ['./index.js']; // entry point to all routes
 
-module.exports = {
-  swaggerUi,
-  specs,
-};
+swaggerAutogen(outputFile, endpointsFiles, doc);
