@@ -1,21 +1,19 @@
 const express = require("express");
 const {
   createMeme,
+  upload,
   getMemes,
-  upvoteMeme,
   getMemeById,
+  upvoteMeme,
   downvoteMeme,
-  upload, // multer middleware
 } = require("../controllers/memeController");
 
 const router = express.Router();
 
-// ✅ Apply multer middleware here for image upload
 router.post("/", upload, createMeme);
-
 router.get("/", getMemes);
-router.post("/:id/upvote", upvoteMeme);
-router.post("/:id/downvote", downvoteMeme);
 router.get("/:id", getMemeById);
+router.post("/upvote", upvoteMeme);
+router.post("/downvote", downvoteMeme);
 
 module.exports = router;

@@ -1,116 +1,97 @@
-const Meme = require("../models/Meme");
 const multer = require("multer");
+const {
+  createMemeService,
+  getAllMemes,
+  getMemeById,
+  upvoteMeme,
+  downvoteMeme,
+} = require("../services/memeService");
 
-// Multer storage in memory, no disk
+// Multer for in-memory storage (for image binary blob)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
+
+exports.upload = upload.single("image"); // field name 'image' matches frontend
+
+// Create Meme — this one directly handles file (because file is in req.file)
 
 exports.createMeme = async (req, res) => {
   try {
     const { title, tags, ownerId } = req.body;
     const file = req.file;
 
+    console.log("Received Body:", req.body); // Debugging
+    console.log("Received File:", file); // Debugging
+
     if (!file) {
       return res.status(400).json({ error: "Image file is required." });
     }
 
-    const meme = new Meme({
+    const meme = await createMemeService({
       title,
-      image: {
-        data: file.buffer, // file as Buffer
-        contentType: file.mimetype,
-      },
-      tags: tags.split(",").map((tag) => tag.trim()),
+      tags,
       ownerId,
       upvotes: 0,
+      imageBuffer: file.buffer,
+      contentType: file.mimetype,
     });
 
-    await meme.save();
     res.json(meme);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to create meme" });
+  } catch (error) {
+    console.error("Create Meme Error:", error); // Debugging
+    res.status(500).json({ error: error.message || "Unknown error" });
   }
 };
-
-// Get all Memes
+// Rest through service
 exports.getMemes = async (req, res) => {
   try {
-    const memes = await Meme.find({});
-
-    const formattedMemes = memes.map((meme) => {
-      const base64Image = meme.image.data.toString("base64");
-      const imageUrl = `data:${meme.image.contentType};base64,${base64Image}`;
-
-      return {
-        _id: meme._id,
-        title: meme.title,
-        tags: meme.tags,
-        ownerId: meme.ownerId,
-        upvotes: meme.upvotes,
-        imageUrl,
-      };
-    });
-
-    res.json(formattedMemes);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch memes" });
+    const memes = await getAllMemes();
+    res.json(memes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
-// Get Meme by ID
+
 exports.getMemeById = async (req, res) => {
   try {
-    const meme = await Meme.findById(req.params.id);
-    if (!meme) {
-      return res.status(404).json({ error: "Meme not found" });
-    }
-
-    const base64Image = meme.image.data.toString("base64");
-    const imageUrl = `data:${meme.image.contentType};base64,${base64Image}`;
-
-    res.json({
-      _id: meme._id,
-      title: meme.title,
-      tags: meme.tags,
-      ownerId: meme.ownerId,
-      upvotes: meme.upvotes,
-      imageUrl,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch meme" });
+    const meme = await getMemeById(req.params.id);
+    res.json(meme);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
-// Upvote Meme
+
 exports.upvoteMeme = async (req, res) => {
   try {
-    const meme = await Meme.findById(req.params.id);
-    if (!meme) {
-      return res.status(404).json({ error: "Meme not found" });
+    const { id } = req.body; // ✅ Get id from the request body
+    console.log("upvoteMeme ID:", id);
+
+    if (!id) {
+      return res
+        .status(400)
+        .json({ error: "ID is required in the request body" });
     }
-    meme.upvotes++;
-    await meme.save();
+
+    const meme = await upvoteMeme(id); // pass the id to your service function
     res.json(meme);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to upvote meme" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
-
-// Downvote Meme
 exports.downvoteMeme = async (req, res) => {
   try {
-    const meme = await Meme.findById(req.params.id);
-    if (!meme) {
-      return res.status(404).json({ error: "Meme not found" });
+    const { id } = req.body; // ✅ Get id from the request body
+    console.log("upvoteMeme ID:", id);
+
+    if (!id) {
+      return res
+        .status(400)
+        .json({ error: "ID is required in the request body" });
     }
-    meme.upvotes = Math.max(0, meme.upvotes - 1); // no negative votes
-    await meme.save();
+
+    const meme = await downvoteMeme(id);
     res.json(meme);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to downvote meme" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
-
-// Export multer middleware for route
-exports.upload = upload.single("image"); // 'image' matches frontend form-data key

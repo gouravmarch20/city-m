@@ -4,7 +4,7 @@ const { placeBid, getBidsByMemeId, getTopMemes } = require('../controllers/bidCo
 const router = express.Router();
 
 router.post('/', placeBid);                     // Place Bid
-router.get('/meme/:memeId', getBidsByMemeId);   // Get Bids for Meme ID
+router.post('/meme', getBidsByMemeId);   // Get Bids for Meme ID
 router.get('/top-memes', getTopMemes);          // Get Top Memes
 
 module.exports = router;
