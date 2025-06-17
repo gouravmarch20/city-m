@@ -1,11 +1,17 @@
 const mongoose = require("mongoose");
+
 const memeSchema = new mongoose.Schema({
   title: String,
-  imageUrl: String,
+  image: {
+    data: Buffer,
+    contentType: String,
+  },
   tags: [String],
-  upvotes: Number,
   ownerId: String,
+  upvotes: {
+    type: Number,
+    default: 0,
+  },
 });
-module.exports = mongoose.model("Meme", memeSchema);
 
-// models/Bid.js
+module.exports = mongoose.model("Meme", memeSchema);

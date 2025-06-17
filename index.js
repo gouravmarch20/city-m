@@ -1,64 +1,51 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const mongoose = require("mongoose");
+const connectDB = require("./config/db");
 const swaggerUi = require("swagger-ui-express");
 const swaggerFile = require("./swagger-output.json");
+const bodyParser = require('body-parser');
+
+const memeRoutes = require("./routes/memeRoutes");
+const bidRoutes = require("./routes/bidRoutes");
+const leaderboardRoutes = require("./routes/leaderboardRoutes");
+const aiRoutes = require("./routes/aiRoutes");
+
+const { createServer } = require("http");
+const { setupSocket } = require("./config/socket");
 
 dotenv.config();
 
 const app = express();
+const server = createServer(app);
 
-// MongoDB Connection
-const connectDB = async () => {
-  try {
-    await mongoose.connect(
-      process.env.MONGO_URI || "mongodb://127.0.0.1:27017/testdb",
-      {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      }
-    );
-    console.log("✅ MongoDB Connected");
-  } catch (error) {
-    console.error("❌ MongoDB connection error:", error);
-    process.exit(1);
-  }
-};
-
+// Connect to MongoDB
 connectDB();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 
-// Example API Routes
-app.get("/api/memes", (req, res) => {
-  res.json({ message: "Memes route working!" });
-});
+// 🔍 Add this line to serve images publicly:
+app.use('/uploads', express.static('uploads'));
 
-app.get("/api/bids", (req, res) => {
-  res.json({ message: "Bids route working!" });
-});
-
-app.get("/api/leaderboard", (req, res) => {
-  res.json({ message: "Leaderboard route working!" });
-});
-
-app.get("/api/ai", (req, res) => {
-  res.json({ message: "AI route working!" });
-});
+// API Routes
+app.use("/api/memes", memeRoutes);
+app.use("/api/bids", bidRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Swagger Docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));
 
-// Home Route
-app.get("/", (req, res) => {
-  res.send("Hello from Single-file Express Server!");
-});
+// Socket.io Setup (if needed)
+setupSocket(server);
 
-// Start Server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 5001;
+
+server.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`📚 Swagger Docs available at http://localhost:${PORT}/api-docs`);
 });
