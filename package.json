@@ -5,8 +5,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "swagger-autogen": "node swagger.js && nodemon index.js"
-
+    "swagger-autogen": "node swagger.js && nodemon index.js",
+    "build": "echo \"No build step required\""
   },
   "keywords": [],
   "author": "",

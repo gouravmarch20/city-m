@@ -20,3 +20,4 @@ Thumbs.db
 # Optional: production build outputs (if any)
 dist/
 build/
+.vercel
